@@ -1,5 +1,5 @@
 from math import cos,sin,pi
-from kandinsky import fill_rect as fr,draw_string as ds
+from kandinsky import fill_rect as fr,draw_string as ds,get_pixel as gp
 from ion import keydown as kd
 from time import sleep as sl,monotonic as mn
 
@@ -7,37 +7,39 @@ def ent(x):
  if x-int(x)>.5:return int(x)+1
  elif x-int(x)<=.5:return int(x)
 
-rond=[[0]*16 for i in range(15)]
-for i in range(75*pi):
- cx,cy=cos(i)*7.5,sin(i)*7.5
- for n in range(-2*int(cy)):
-  rond[ent(cy)+n+7][ent(cx)+7]=1
-rond[0][10]=rond[4][14]=rond[9][14]=rond[13][10]=0
-rond.insert(8,[1]*16)
-for i in range(15):
- for n in range(8,16):
-  if[rond[i][n-1],rond[i][n]]==[1,0]:
-   rond[i][n]=1
-   break
-del i,n
+ns=10 #Number of squares
+pl,s,ss=1,222//ns,2
+var=1 if ns>13 else 3 if ns<9 else 2
+sz=s-2*ss-var
+Sz=sz//2
+for i in range(16*Sz*pi):
+ cx,o=160+cos(i)*Sz,sin(i)*Sz
+ cy=111+o
+ fr(ent(cx),ent(cy),1,-2*ent(o),(0,)*3)
+rond=[[0]*(Sz*2+1)for i in range(Sz*2)]
+for a in range(len(rond)):
+ for b in range(len(rond[a])):
+  if gp(160-Sz+b,111-Sz+a)==(0,)*3:rond[a][b]=1
+del var,i,a,b,Sz
 itfc=(255,181,59)
 c1,c2=(0,85,66),(231,227,206)
 n,wh=(74,41,51),(223,175,121)
 re,gr,bl=(255,0,0),(48,246,49),(0,0,255)
 pbl,slct=gr,bl
-pl,s,ss=1,22,2
-tl=lambda a,b:220+(100-(len(str(a))+b)*10)//2
+sns=s*ns
+tl=lambda a,b:sns+(320-sns-(len(str(a))+b)*10)//2
 ww=wb=0
 
 col={1:wh,2:(255,)*3,6:n,7:(0,)*3}
 def draw(x,y): #Dessiner les pièces
  p=jeu[y][x]
  if p==0:return
- c,x,y=col[p],(x+1)*s-19,(y+1)*s-19
- for a in range(16):
-  for b in range(15):
-   if rond[b][a]==1:
-    fr(x+a,y+b,1,1,c)
+ var=2 if ns>13 else 3
+ c,x,y=col[p],x*s+var,y*s+var
+ for a in range(len(rond)):
+  for b in range(len(rond[a])):
+   if rond[a][b]==1:
+    fr(x+b,y+a,1,1,c)
 
 def ap(x,y,p,r,cj): #analyse des prises
  [a1,a2,e1,e2]=[1,2,6,7]if p in[1,2]else[6,7,1,2]
@@ -45,9 +47,9 @@ def ap(x,y,p,r,cj): #analyse des prises
   for dx in[-1,1]:
    for dy in[-1,1]:
     px,py=x+dx,y+dy
-    if 0<=px<=9 and 0<=py<=9 and cj[py][px]in[e1,e2]:
+    if 0<=px<ns and 0<=py<ns and cj[py][px]in[e1,e2]:
      nx,ny=x+2*dx,y+2*dy
-     if 0<=nx<=9 and 0<=ny<=9 and cj[ny][nx]==0:
+     if 0<=nx<ns and 0<=ny<ns and cj[ny][nx]==0:
       if r==0:tp.append([x,y,0,r])
       tp.append([px,py,2,r+1]),tp.append([nx,ny,1,r+1])
       nj=[row[:]for row in cj]
@@ -56,13 +58,13 @@ def ap(x,y,p,r,cj): #analyse des prises
  else:
   for dx in[-1,1]:
    for dy in[-1,1]:
-    for n in range(1,10):
+    for n in range(1,ns):
      px,py=x+dx*n,y+dy*n
-     if not 0<=px<=9 or not 0<=py<=9 or cj[py][px]in[a1,a2]:break
+     if not 0<=px<ns or not 0<=py<ns or cj[py][px]in[a1,a2]:break
      if cj[py][px]in[e1,e2]:
-      for i in range(1,10):
+      for i in range(1,ns):
        nx,ny=px+dx*i,py+dy*i
-       if not 0<=nx<=9 or not 0<=ny<=9 or cj[ny][nx]!=0:break
+       if not 0<=nx<ns or not 0<=ny<ns or cj[ny][nx]!=0:break
        if cj[ny][nx]==0:
         if r==0:tp.append([x,y,0,r])
         tp.append([px,py,2,r+1]),tp.append([nx,ny,1,r+1])
@@ -73,8 +75,8 @@ def ap(x,y,p,r,cj): #analyse des prises
 def cp(): #coups possibles (en termes de prises)
  global tp,og,np
  tp=[]
- for a in range(10):
-  for b in range(10):
+ for a in range(ns):
+  for b in range(ns):
    p=jeu[b][a]
    if pl==1 and p>3:continue
    elif pl==2 and p<4:continue
@@ -111,7 +113,7 @@ def pm(xm,ym,l=0): #possibilités de mouvement
    py=y-1 if p==1 else y+1
    for dx in [-1,1]:
     px=x+dx
-    if 0<=px<=9 and jeu[py][px]==0:
+    if 0<=px<ns and jeu[py][px]==0:
      if l==2:return True
      if i==1:
       fr(px*s,py*s,s,s,pbl)
@@ -121,9 +123,9 @@ def pm(xm,ym,l=0): #possibilités de mouvement
      draw(px,py)
   elif p in[2,7]:
    for d in range(4):
-    for n in range(1,10):
+    for n in range(1,ns):
      [px,py]=[x+n,y+n]if d==0 else[x+n,y-n]if d==1 else[x-n,y-n]if d==2 else[x-n,y+n]
-     if 0<=px<=9 and 0<=py<=9:
+     if 0<=px<ns and 0<=py<ns:
       if jeu[py][px]==0:
        if l==2:return True
        if i==1:
@@ -168,7 +170,6 @@ def ok(): #lorsqu'on appuie sur la touche de séléction
    delete=[]
    for i,pos in enumerate(np):
     if[pos[0][0],pos[0][1]]!=[bx,by]or[pos[1][0],pos[1][1]]!=[px,py]or[pos[2][0],pos[2][1]]!=[x,y]:delete.append(pos)
-    #La 2ème vérification avec px,py ne sert à rien puisqu'il est impossible de partir d'une case et arriver à une autre sans passer par la même case intermédiaire
     else:
      np[i].remove(pos[0]),np[i].remove(pos[0])
      if len(pos)>1:rm=True
@@ -177,7 +178,7 @@ def ok(): #lorsqu'on appuie sur la touche de séléction
   bf=[]
   if not rm:
    pv()
-   if[jeu[y][x],y]==[1,0]or[jeu[y][x],y]==[6,9]:
+   if[jeu[y][x],y]==[1,0]or[jeu[y][x],y]==[6,ns-1]:
     jeu[y][x]+=1
     draw(x,y)
    vp,xp,yp,og,it=0,bx,by,0,0
@@ -200,16 +201,14 @@ def dt(): #Affichage du timer
    tw-=mn()-tm
    m,s=str(int(tw//60)),str(int(tw%60))
    cl=re if tw<temps/10 else wh
-   ds("0",245,196,wh),ds("0",275,196,cl)
    m,s=str("0"+m)if len(m)==1 else m,str("0"+s)if len(s)==1 else s
-   ds(str(m)+":"+str(s),245,196,cl)
+   ds(m+":"+s,tl(m+s,1),196,cl)
   elif pl==2:
    tb-=mn()-tm
    m,s=str(int(tb//60)),str(int(tb%60))
    cl=re if tb<temps/10 else n
-   ds("0",245,8,n),ds("0",275,8,cl)
    m,s=str("0"+m)if len(m)==1 else m,str("0"+s)if len(s)==1 else s
-   ds(str(m)+":"+str(s),245,8,cl)
+   ds(m+":"+s,tl(m+s,1),8,cl)
   if[m,s]==["00","01"]:win(pl)
   tm=mn()
 
@@ -264,56 +263,56 @@ def pv(): #Vérifier les positions (pour chercher une égalité)
  if hc==50:tie()
  #Chercher s'il n'y a plus assez de matériel
  pn={0:0,1:0,2:0,6:0,7:0}
- for a in range(10):
-  for b in range(10):pn[jeu[b][a]]+=1
+ for a in range(ns):
+  for b in range(ns):pn[jeu[b][a]]+=1
  if pn[1]==pn[6]==0:
   if[pn[2],pn[7]]in[[2,1],[1,1],[1,2]]:tie()
  #Chercher une partie trop longue s'il n'y a plus assez de matériel
  if hc2==0:
   pn={0:0,1:0,2:0,6:0,7:0}
-  for a in range(10):
-   for b in range(10):pn[jeu[b][a]]+=1
+  for a in range(ns):
+   for b in range(ns):pn[jeu[b][a]]+=1
   for a,b in[[2,7],[7,2]]:
    if[pn[a-1],pn[a]]==[0,1]and pn[b-1]+pn[b]==3 and pn[b]>0:hc2+=1
  else:hc2+=1
  if hc2==32:tie()
 def ac(): #Cherche s'il reste des coups possibles pour chercher une potentielle défaite
  p=jeu[y][x]
- for a in range(10):
-  for b in range(10):
+ for a in range(ns):
+  for b in range(ns):
    val=pm(a,b,2)
    if val:break
   if val:break
  if not val:win(pl)
 def gu(): #Give Up (abandon)
- fr(0,0,220,220,col[7])
- ds("Abandon dans :",40,72)
- ds("3",105,102)
- ds("Appuyez sur 'clear'",15,132)
- ds("pour annuler",50,162)
+ fr(0,0,sns,sns,col[7])
+ ds("Abandon dans :",sns//2-70,72)
+ ds("3",sns//2-5,102)
+ ds("Appuyez sur 'clear'",sns//2-95,132)
+ ds("pour annuler",sns//2-60,162)
  sl(1)
  rt=mn()+3
  while True:
-  ds(str(int(rt-mn())),105,102)
+  ds(str(int(rt-mn())),sns//2-5,102)
   if kd(17):sl(0.3);break
   elif rt-mn()<0:win(pl);break
- for a in range(10):
-  for b in range(10):
+ for a in range(ns):
+  for b in range(ns):
    fr(a*s,b*s,s,s,f[b][a]),draw(a,b)
 def ad(): #Ask Draw (nulle)
- fr(0,0,220,220,col[7])
- ds("Egalité dans :",40,72)
- ds("3",105,102)
- ds("Appuyez sur 'clear'",15,132)
- ds("pour annuler",50,162)
+ fr(0,0,sns,sns,col[7])
+ ds("Egalité dans :",sns//2-70,72)
+ ds("3",sns//2-5,102)
+ ds("Appuyez sur 'clear'",sns//2-95,132)
+ ds("pour annuler",sns//2-60,162)
  sl(1)
  rt=mn()+3
  while True:
-  ds(str(int(rt-mn())),105,102)
+  ds(str(int(rt-mn())),sns//2-5,102)
   if kd(17):sl(0.3);break
   elif rt-mn()<0:tie();break
- for a in range(10):
-  for b in range(10):
+ for a in range(ns):
+  for b in range(ns):
    fr(a*s,b*s,s,s,f[b][a]),draw(a,b)
 
 def win(pl): #Victoire
@@ -333,18 +332,20 @@ def tie(): #Egalité
 
 while True:
  fr(0,0,320,222,itfc)
- f=[[c2]*10 for i in range(10)]
- for a in range(10):
-   for b in range(10):
-     if (20-a+b)%2==1:f[a][b]=c1
+ f=[[c2]*ns for i in range(ns)]
+ for a in range(ns):
+   for b in range(ns):
+     if (ns*2-a+b)%2==1:f[a][b]=c1
      fr(a*s,b*s,s,s,f[a][b])
- jeu=[[0]*10 for i in range(10)]
- for a in range(10):
-   for b in range(10):
-     if (20-a+b)%2==1:
-       if b<4:jeu[b][a]=6
-       elif b>5:jeu[b][a]=1
+ jeu=[[0]*ns for i in range(ns)]
+ var=0 if ns%2 else 1
+ for a in range(ns):
+   for b in range(ns):
+     if (ns*2-a+b)%2==1:
+       if b<ns//2-var:jeu[b][a]=6
+       elif b>ns//2:jeu[b][a]=1
        draw(a,b)
+ del var
  x=y=xp=yp=mov=vp=og=bx=by=it=0
  bf=[]
  hh,hc,hc2=[],0,0
@@ -355,11 +356,10 @@ while True:
  ds("Coups:"+str(sh),tl(sh,6),89,bl),ds("Joueur:"+str(pl),tl(pl,7),116,bl)
  ds("Points:"+str(pw),tl(pw,7),143,wh),ds("Points:"+str(pb),tl(pw,7),62,n)
  ds("Wins:"+str(ww),tl(ww,5),169,wh),ds("Wins:"+str(wb),tl(wb,5),35,n)
- ds("00:00",245,196,wh),ds("00:00",245,8,n)
  str1,str2,str3,str4=str(ent(tw//60)),str(ent(tw%60)),str(ent(tb//60)),str(ent(tb%60))
  str1=str("0"+str1)if len(str1)==1 else str1;str2=str("0"+str2)if len(str2)==1 else str2
  str3=str("0"+str3)if len(str3)==1 else str3;str4=str("0"+str4)if len(str4)==1 else str4
- ds(str1+":"+str2,245,196,wh),ds(str3+":"+str4,245,8,n)
+ ds(str1+":"+str2,tl(str1+str2,1),196,wh),ds(str3+":"+str4,tl(str3+str4,1),8,n)
  game=new=True
  while game:
    if new:
@@ -371,9 +371,9 @@ while True:
 
    dt()
    if kd(1) and y>0:xp,yp,y,new,mov=x,y,y-1,True,1
-   elif kd(2) and y<9:xp,yp,y,new,mov=x,y,y+1,True,1
+   elif kd(2) and y<ns-1:xp,yp,y,new,mov=x,y,y+1,True,1
    if kd(0) and x>0:xp,yp,x,new=x,y if mov==0 else yp,x-1,True
-   elif kd(3) and x<9:xp,yp,x,new=x,y if mov==0 else yp,x+1,True
+   elif kd(3) and x<ns-1:xp,yp,x,new=x,y if mov==0 else yp,x+1,True
    elif kd(4)or kd(52):ok()
    elif kd(12):gu()
    elif kd(13):ad()
