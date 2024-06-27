@@ -1,0 +1,379 @@
+from math import cos,sin,pi
+from kandinsky import fill_rect as fr,draw_string as ds
+from ion import keydown as kd
+from time import sleep as sl,monotonic as mn
+
+def ent(x):
+ if x-int(x)>.5:return int(x)+1
+ elif x-int(x)<=.5:return int(x)
+
+rond=[[0]*16 for i in range(15)]
+for i in range(75*pi):
+ cx,cy=cos(i)*7.5,sin(i)*7.5
+ for n in range(-2*int(cy)):
+  rond[ent(cy)+n+7][ent(cx)+7]=1
+rond[0][10]=rond[4][14]=rond[9][14]=rond[13][10]=0
+rond.insert(8,[1]*16)
+for i in range(15):
+ for n in range(8,16):
+  if[rond[i][n-1],rond[i][n]]==[1,0]:
+   rond[i][n]=1
+   break
+del i,n
+itfc=(255,181,59)
+c1,c2=(0,85,66),(231,227,206)
+n,wh=(74,41,51),(223,175,121)
+re,gr,bl=(255,0,0),(48,246,49),(0,0,255)
+pbl,slct=gr,bl
+pl,s,ss=1,22,2
+tl=lambda a,b:220+(100-(len(str(a))+b)*10)//2
+ww=wb=0
+
+col={1:wh,2:(255,)*3,6:n,7:(0,)*3}
+def draw(x,y): #Dessiner les pièces
+ p=jeu[y][x]
+ if p==0:return
+ c,x,y=col[p],(x+1)*s-19,(y+1)*s-19
+ for a in range(16):
+  for b in range(15):
+   if rond[b][a]==1:
+    fr(x+a,y+b,1,1,c)
+
+def ap(x,y,p,r,cj): #analyse des prises
+ [a1,a2,e1,e2]=[1,2,6,7]if p in[1,2]else[6,7,1,2]
+ if p in[1,6]:
+  for dx in[-1,1]:
+   for dy in[-1,1]:
+    px,py=x+dx,y+dy
+    if 0<=px<=9 and 0<=py<=9 and cj[py][px]in[e1,e2]:
+     nx,ny=x+2*dx,y+2*dy
+     if 0<=nx<=9 and 0<=ny<=9 and cj[ny][nx]==0:
+      if r==0:tp.append([x,y,0,r])
+      tp.append([px,py,2,r+1]),tp.append([nx,ny,1,r+1])
+      nj=[row[:]for row in cj]
+      nj[py][px],nj[ny][nx],nj[y][x]=0,nj[y][x],0
+      ap(nx,ny,p,r+1,nj)
+ else:
+  for dx in[-1,1]:
+   for dy in[-1,1]:
+    for n in range(1,10):
+     px,py=x+dx*n,y+dy*n
+     if not 0<=px<=9 or not 0<=py<=9 or cj[py][px]in[a1,a2]:break
+     if cj[py][px]in[e1,e2]:
+      for i in range(1,10):
+       nx,ny=px+dx*i,py+dy*i
+       if not 0<=nx<=9 or not 0<=ny<=9 or cj[ny][nx]!=0:break
+       if cj[ny][nx]==0:
+        if r==0:tp.append([x,y,0,r])
+        tp.append([px,py,2,r+1]),tp.append([nx,ny,1,r+1])
+        nj=[row[:]for row in cj]
+        nj[py][px],nj[ny][nx],nj[y][x]=0,nj[y][x],0
+        ap(nx,ny,p,r+1,nj)
+      break
+def cp(): #coups possibles (en termes de prises)
+ global tp,og,np
+ tp=[]
+ for a in range(10):
+  for b in range(10):
+   p=jeu[b][a]
+   if pl==1 and p>3:continue
+   elif pl==2 and p<4:continue
+   cj=jeu
+   if jeu[b][a]!=0:ap(a,b,jeu[b][a],0,cj)
+ if len(tp)>1:
+  og,np,hv=1,[],0
+  for vx,vy,ch,r in tp:
+   if r>hv:hv=r
+  rep=0
+  for i,[vx,vy,ch,r]in enumerate(tp):
+   if[r,ch]==[hv,1]:
+    ok,na,pbf=False,hv,[]
+    np.append([])
+    for ni,[nx,ny,nc,nr]in enumerate(reversed(tp)):
+     if not ok and ni>=len(tp)-1-i and[nx,ny,nc,r]==[vx,vy,ch,r]:ok=True
+     if ok and nr==na:
+      pbf.append([nx,ny,nc])
+      if nc==2:na-=1
+      if nr==0:break
+    for val in reversed(pbf):
+     np[rep].append(val)
+    rep+=1
+
+def pm(xm,ym,l=0): #possibilités de mouvement
+ for i in range(2):
+  [x,y]=[xp,yp]if i==0 else[xm,ym]
+  p=jeu[y][x]
+  if pl==1 and p>4:continue
+  elif pl==2 and p<3:continue
+  if[og,l]==[1,2]:return True
+  if og==i==1 or[i,l]==[0,2]:continue
+  if p in[1,6]:
+   py=y-1 if p==1 else y+1
+   for dx in [-1,1]:
+    px=x+dx
+    if 0<=px<=9 and jeu[py][px]==0:
+     if l==2:return True
+     if i==1:
+      fr(px*s,py*s,s,s,pbl)
+      if l==0:fr(px*s+ss,py*s+ss,s-ss*2,s-ss*2,f[py][px])
+      else:bf.append([px,py,1])
+     else:fr(px*s,py*s,s,s,f[py][px])
+     draw(px,py)
+  elif p in[2,7]:
+   for d in range(4):
+    for n in range(1,10):
+     [px,py]=[x+n,y+n]if d==0 else[x+n,y-n]if d==1 else[x-n,y-n]if d==2 else[x-n,y+n]
+     if 0<=px<=9 and 0<=py<=9:
+      if jeu[py][px]==0:
+       if l==2:return True
+       if i==1:
+        fr(px*s,py*s,s,s,pbl)
+        if l==0:fr(px*s+ss,py*s+ss,s-ss*2,s-ss*2,f[py][px])
+        else:bf.append([px,py,1])
+       else:fr(px*s,py*s,s,s,f[py][px])
+      else:break
+
+def ok(): #lorsqu'on appuie sur la touche de séléction
+ global pl,vp,bf,new,sh,pw,pb,bx,by,og,it
+ if og:
+  for psbl in np:
+   if[psbl[0][0],psbl[0][1]]==[x,y]:
+    bf.append(psbl[1]),bf.append(psbl[2])
+ for vx,vy,ch in bf:fr(vx*s,vy*s,s,s,f[vy][vx]),draw(vx,vy)
+ if vp==0 and(pl==1 and jeu[y][x]in[1,2]or pl==2 and jeu[y][x]in[6,7]):
+  if og:
+   ag=False
+   for pos in np:
+    if[pos[0][0],pos[0][1]]==[x,y]:ag=True
+   if not ag:return
+  vp,bx,by=1,x,y
+  if not og:pm(x,y,1)
+  else:
+   for vx,vy,ch in bf:
+    if ch==1:fr(vx*s,vy*s,s,s,pbl)
+    elif ch==2:fr(vx*s,vy*s,s,s,re)
+ elif[vp,x,y,it]==[1,bx,by,0]:vp,bf,bx,by=0,[],0,0
+ elif vp==1 and[x,y,1]in bf:
+  jeu[y][x],jeu[by][bx],it=jeu[by][bx],0,1
+  fr(bx*s,by*s,s,s,f[by][bx]),draw(bx,by)
+  rm=False
+  if og==1:
+   for i,[vx,vy,ch]in enumerate(bf):rp=i-1 if[vx,vy]==[x,y]else 0
+   px,py=bf[rp][0],bf[rp][1]
+   if jeu[py][px]>4:pw=pw+1 if jeu[py][px]==6 else pw+5
+   elif jeu[py][px]<3:pb=pb+1 if jeu[py][px]==1 else pb+5
+   ds("Points:"+str(pw),tl(pw,7),143,wh),ds("Points:"+str(pb),tl(pb,7),62,n)
+   jeu[py][px]=0
+   fr(px*s,py*s,s,s,f[py][px])
+   delete=[]
+   for i,pos in enumerate(np):
+    if[pos[0][0],pos[0][1]]!=[bx,by]or[pos[1][0],pos[1][1]]!=[px,py]or[pos[2][0],pos[2][1]]!=[x,y]:delete.append(pos)
+    #La 2ème vérification avec px,py ne sert à rien puisqu'il est impossible de partir d'une case et arriver à une autre sans passer par la même case intermédiaire
+    else:
+     np[i].remove(pos[0]),np[i].remove(pos[0])
+     if len(pos)>1:rm=True
+   for i in delete:np.remove(i)
+   del delete
+  bf=[]
+  if not rm:
+   pv()
+   if[jeu[y][x],y]==[1,0]or[jeu[y][x],y]==[6,9]:
+    jeu[y][x]+=1
+    draw(x,y)
+   vp,xp,yp,og,it=0,bx,by,0,0
+   sh,pl=sh+1 if pl==2 else sh,2 if pl==1 else 1
+   ds("Coups:"+str(sh),tl(sh,6),89,bl),ds("Joueur:"+str(pl),tl(pl,7),116,bl)
+   cp(),ac()
+  else:
+   bx,by,it=x,y,1
+   for psbl in np:
+    if[psbl[0][0],psbl[0][1]]==[x,y]:
+     bf.append(psbl[1]),bf.append(psbl[2])
+     if psbl[0][2]==1:fr(vx*s,vy*s,s,s,pbl)
+     elif psbl[0][2]==2:fr(vx*s,vy*s,s,s,re)
+ new=True
+
+def dt(): #Affichage du timer
+ global pl,tm,tw,tb
+ if mn()-tm>=1:
+  if pl==1:
+   tw-=mn()-tm
+   m,s=str(int(tw//60)),str(int(tw%60))
+   cl=re if tw<temps/10 else wh
+   ds("0",245,196,wh),ds("0",275,196,cl)
+   m,s=str("0"+m)if len(m)==1 else m,str("0"+s)if len(s)==1 else s
+   ds(str(m)+":"+str(s),245,196,cl)
+  elif pl==2:
+   tb-=mn()-tm
+   m,s=str(int(tb//60)),str(int(tb%60))
+   cl=re if tb<temps/10 else n
+   ds("0",245,8,n),ds("0",275,8,cl)
+   m,s=str("0"+m)if len(m)==1 else m,str("0"+s)if len(s)==1 else s
+   ds(str(m)+":"+str(s),245,8,cl)
+  if[m,s]==["00","01"]:win(pl)
+  tm=mn()
+
+def draw_np(xm,ym,i): #Afficher les possibilités dans le np
+ for coup in np:
+  at=0
+  for ni,[vx,vy,ch]in enumerate(coup):
+   if ni==0 and[vx,vy]==[xm,ym]:at=1
+   if ch==0 and not[vx,vy]==[xm,ym]:break
+   if ni==0:continue
+   if at:
+    if i==0:
+     if ch==1:fr(vx*s,vy*s,s,s,pbl)
+     elif ch==2:fr(vx*s,vy*s,s,s,re)
+     fr(vx*s+ss,vy*s+ss,s-ss*2,s-ss*2,f[vy][vx]),draw(vx,vy)
+    else:fr(vx*s,vy*s,s,s,f[vy][vx]),draw(vx,vy)
+def sp(): #Montrer les possibilités visuellement depuis un point
+ if vp==0:
+  for i in range(2):
+   [xm,ym]=[x,y]if i==0 else[xp,yp]
+   if og==0:pm(x,y)
+   else:draw_np(xm,ym,i)
+ elif vp==1:
+  if og==0:
+   for vx,vy,ch in bf:
+    if ch==1:fr(vx*s,vy*s,s,s,pbl)
+    elif ch==2:fr(vx*s,vy*s,s,s,re)
+    draw(vx,vy)
+  else:
+   draw_np(bx,by,0)
+   for vx,vy,ch in bf:
+    if ch==1:fr(vx*s,vy*s,s,s,pbl)
+    elif ch==2:fr(vx*s,vy*s,s,s,re)
+    draw(vx,vy)
+
+def pv(): #Vérifier les positions (pour chercher une égalité)
+ global hh,hc,hc2
+ #Chercher une répétition de mouvements
+ hh.append([[bx,by],[x,y]])
+ if og:hh=[]
+ if len(hh)==6:
+  rt=True
+  for a,b in[[0,2],[1,3]]:
+   if hh[a]!=hh[b+2]:rt=False;break
+   for c in range(2):
+    if hh[a][c]!=hh[b][1-c]:rt=False;break
+  if rt:tie()
+  else:hh.pop(0)
+ #Chercher une partie trop longue sans actions
+ if not og and jeu[y][x]not in[1,6]:hc+=1
+ else:hc=0
+ if hc==50:tie()
+ #Chercher s'il n'y a plus assez de matériel
+ pn={0:0,1:0,2:0,6:0,7:0}
+ for a in range(10):
+  for b in range(10):pn[jeu[b][a]]+=1
+ if pn[1]==pn[6]==0:
+  if[pn[2],pn[7]]in[[2,1],[1,1],[1,2]]:tie()
+ #Chercher une partie trop longue s'il n'y a plus assez de matériel
+ if hc2==0:
+  pn={0:0,1:0,2:0,6:0,7:0}
+  for a in range(10):
+   for b in range(10):pn[jeu[b][a]]+=1
+  for a,b in[[2,7],[7,2]]:
+   if[pn[a-1],pn[a]]==[0,1]and pn[b-1]+pn[b]==3 and pn[b]>0:hc2+=1
+ else:hc2+=1
+ if hc2==32:tie()
+def ac(): #Cherche s'il reste des coups possibles pour chercher une potentielle défaite
+ p=jeu[y][x]
+ for a in range(10):
+  for b in range(10):
+   val=pm(a,b,2)
+   if val:break
+  if val:break
+ if not val:win(pl)
+def gu(): #Give Up (abandon)
+ fr(0,0,220,220,col[7])
+ ds("Abandon dans :",40,72)
+ ds("3",105,102)
+ ds("Appuyez sur 'clear'",15,132)
+ ds("pour annuler",50,162)
+ sl(1)
+ rt=mn()+3
+ while True:
+  ds(str(int(rt-mn())),105,102)
+  if kd(17):sl(0.3);break
+  elif rt-mn()<0:win(pl);break
+ for a in range(10):
+  for b in range(10):
+   fr(a*s,b*s,s,s,f[b][a]),draw(a,b)
+def ad(): #Ask Draw (nulle)
+ fr(0,0,220,220,col[7])
+ ds("Egalité dans :",40,72)
+ ds("3",105,102)
+ ds("Appuyez sur 'clear'",15,132)
+ ds("pour annuler",50,162)
+ sl(1)
+ rt=mn()+3
+ while True:
+  ds(str(int(rt-mn())),105,102)
+  if kd(17):sl(0.3);break
+  elif rt-mn()<0:tie();break
+ for a in range(10):
+  for b in range(10):
+   fr(a*s,b*s,s,s,f[b][a]),draw(a,b)
+
+def win(pl): #Victoire
+ draw(x,y)
+ global game,ww,wb
+ sl(3),fr(0,0,320,222,col[2])
+ if pl==1:wb+=1;winner="noirs"
+ if pl==2:ww+=1;winner="blancs"
+ ds("Victoire des "+winner+" !",160-(15+len(str(winner)))*5,102),sl(5)
+ game=False
+def tie(): #Egalité
+ draw(x,y)
+ global game
+ sl(3),fr(0,0,320,222,col[2])
+ ds("Egalité !",115,91),ds("Personne ne gagne...",60,131),sl(5)
+ game=False
+
+while True:
+ fr(0,0,320,222,itfc)
+ f=[[c2]*10 for i in range(10)]
+ for a in range(10):
+   for b in range(10):
+     if (20-a+b)%2==1:f[a][b]=c1
+     fr(a*s,b*s,s,s,f[a][b])
+ jeu=[[0]*10 for i in range(10)]
+ for a in range(10):
+   for b in range(10):
+     if (20-a+b)%2==1:
+       if b<4:jeu[b][a]=6
+       elif b>5:jeu[b][a]=1
+       draw(a,b)
+ x=y=xp=yp=mov=vp=og=bx=by=it=0
+ bf=[]
+ hh,hc,hc2=[],0,0
+ temps=600
+ tw=tb=temps
+ tm=mn()
+ pw=pb=sh=0
+ ds("Coups:"+str(sh),tl(sh,6),89,bl),ds("Joueur:"+str(pl),tl(pl,7),116,bl)
+ ds("Points:"+str(pw),tl(pw,7),143,wh),ds("Points:"+str(pb),tl(pw,7),62,n)
+ ds("Wins:"+str(ww),tl(ww,5),169,wh),ds("Wins:"+str(wb),tl(wb,5),35,n)
+ ds("00:00",245,196,wh),ds("00:00",245,8,n)
+ str1,str2,str3,str4=str(ent(tw//60)),str(ent(tw%60)),str(ent(tb//60)),str(ent(tb%60))
+ str1=str("0"+str1)if len(str1)==1 else str1;str2=str("0"+str2)if len(str2)==1 else str2
+ str3=str("0"+str3)if len(str3)==1 else str3;str4=str("0"+str4)if len(str4)==1 else str4
+ ds(str1+":"+str2,245,196,wh),ds(str3+":"+str4,245,8,n)
+ game=new=True
+ while game:
+   if new:
+     new,mov=False,0
+     fr(xp*s,yp*s,s,s,f[yp][xp]),draw(xp,yp)
+     sp()
+     fr(x*s,y*s,s,s,slct),draw(x,y)
+     sl(0.15)
+
+   dt()
+   if kd(1) and y>0:xp,yp,y,new,mov=x,y,y-1,True,1
+   elif kd(2) and y<9:xp,yp,y,new,mov=x,y,y+1,True,1
+   if kd(0) and x>0:xp,yp,x,new=x,y if mov==0 else yp,x-1,True
+   elif kd(3) and x<9:xp,yp,x,new=x,y if mov==0 else yp,x+1,True
+   elif kd(4)or kd(52):ok()
+   elif kd(12):gu()
+   elif kd(13):ad()
