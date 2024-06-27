@@ -29,6 +29,8 @@ It was coded on a Numworks calculator in Micropython.
 ## 🛠️ Details
 You can change the duration of the timer by yourself by modifying the code. It's at the line 351, you just have to change the value which is currently 600 seconds to let 10 minutes at each players. Don't forget to convert it in seconds !
 
+You can also change the number of square on the board. You have to change the value at the line number ..
+
 Unfortunately, it's in French, but there are not so many text so it won't be hard to understand.
 
 The project has been started the September 6 of 2023 and finished the June 26 of 2024 (I didn't work on it during 9 months strait of course...).
