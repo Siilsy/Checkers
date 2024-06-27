@@ -349,7 +349,7 @@ while True:
  x=y=xp=yp=mov=vp=og=bx=by=it=0
  bf=[]
  hh,hc,hc2=[],0,0
- temps=600
+ temps=600 #Duration of the timer
  tw=tb=temps
  tm=mn()
  pw=pb=sh=0
