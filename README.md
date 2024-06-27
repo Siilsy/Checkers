@@ -36,8 +36,8 @@ It was coded on a Numworks calculator in Micropython.
 You can change the duration of the timer by yourself by modifying the code. It's at the line 352, you just have to change the value which is currently 600 seconds to let 10 minutes at each players. Don't forget to convert it in seconds !
 
 You can also change the number of square on the board. You have to change the value at the line number 10. The more common checkers game is on a 10 x 10 board but now you can play on a 8 x 8 board or whatever you want so enjoy !
-##
 
 Unfortunately, it's in French, but there are not so many text so it won't be hard to understand.
 
 The project has been started the September 6 of 2023 and finished the June 26 of 2024 (I didn't work on it during 9 months strait of course...).
+##
