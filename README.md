@@ -1,5 +1,6 @@
 # ⛀ Checkers
 A simple checkers game, currently only playable on Numworks calculator and coded in micropython  !
+#
 
 ## ⌨️ Inputs
 To move your selection square you must press on the dedicated directional arrows. 
@@ -7,6 +8,7 @@ To move your selection square you must press on the dedicated directional arrows
 To select a square you can press the 'OK' or 'EXE' button. First, you have to select the piece you want to move and after select the place where you want to move. 
 
 To give up, it's the 'shift' button and to ask a draw, it's the 'alpha' button. After these to input, a timer of 3 seconds will start to cancel in case you didn't want to do this. 
+##
 
 ## 📜 Rules
 All classics rules of checkers has been added so check the rules online if you don't know them ! 
@@ -27,9 +29,9 @@ This program is coded in micropython just for Numwoks calculator but it must wor
 It was coded on a Numworks calculator in Micropython.
 
 ## 🛠️ Details
-You can change the duration of the timer by yourself by modifying the code. It's at the line 351, you just have to change the value which is currently 600 seconds to let 10 minutes at each players. Don't forget to convert it in seconds !
+You can change the duration of the timer by yourself by modifying the code. It's at the line 352, you just have to change the value which is currently 600 seconds to let 10 minutes at each players. Don't forget to convert it in seconds !
 
-You can also change the number of square on the board. You have to change the value at the line number ..
+You can also change the number of square on the board. You have to change the value at the line number 10. The more common checkers game is on a 10 x 10 board but now you can play on a 8 x 8 board or whatever you want so enjoy !
 
 Unfortunately, it's in French, but there are not so many text so it won't be hard to understand.
 
