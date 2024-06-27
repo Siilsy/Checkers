@@ -27,7 +27,7 @@ This program is coded in micropython just for Numwoks calculator but it must wor
 It was coded on a Numworks calculator in Micropython.
 
 ## 🛠️ Details
-You can change the duration of the timer by yourself by modifying the code, it's at the line 351,
+You can change the duration of the timer by yourself by modifying the code. It's at the line 351, you just have to change the value which is currently 600 seconds to let 10 minutes at each players. Don't forget to convert it in seconds !
 
 Unfortunately, it's in French, but there are not so many text so it won't be hard to understand.
 
